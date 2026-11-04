@@ -1,0 +1,140 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Fredagsbarens event-API",
+    "version": "1.0.0",
+    "description": "Events og tilmeldinger til fredagsbaren. Et event har et begrænset antal pladser."
+  },
+  "servers": [{ "url": "http://localhost:5000" }],
+  "paths": {
+    "/events": {
+      "get": {
+        "summary": "Hent alle events",
+        "responses": {
+          "200": {
+            "description": "Liste af events",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Event" } } } }
+          }
+        }
+      },
+      "post": {
+        "summary": "Opret et event",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NewEvent" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Det nye event",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Event" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/events/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+      "get": {
+        "summary": "Hent ét event",
+        "responses": {
+          "200": {
+            "description": "Eventet",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Event" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "summary": "Slet et event",
+        "responses": {
+          "204": { "description": "Eventet er slettet" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/events/{id}/signups": {
+      "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+      "post": {
+        "summary": "Tilmeld en person",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": { "name": { "type": "string", "example": "Carl" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Det opdaterede event",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Event" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/events/{id}/signups/{name}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/EventId" },
+        { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "delete": {
+        "summary": "Afmeld en person",
+        "responses": {
+          "204": { "description": "Personen er afmeldt" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "EventId": { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+    },
+    "schemas": {
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "title": { "type": "string", "example": "Quizaften" },
+          "date": { "type": "string", "example": "2026-11-13" },
+          "capacity": { "type": "integer", "example": 3 },
+          "participants": { "type": "array", "items": { "type": "string" }, "example": ["Anna", "Bo"] }
+        }
+      },
+      "NewEvent": {
+        "type": "object",
+        "required": ["title", "date", "capacity"],
+        "properties": {
+          "title": { "type": "string", "example": "Quizaften" },
+          "date": { "type": "string", "example": "2026-11-13" },
+          "capacity": { "type": "integer", "minimum": 1, "example": 3 }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": { "error": { "type": "string" } }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Felter mangler, eller capacity er ikke et positivt heltal",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "Eventet eller tilmeldingen findes ikke",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Conflict": {
+        "description": "Eventet er fuldt, eller personen er allerede tilmeldt",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  }
+}
